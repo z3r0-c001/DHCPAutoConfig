@@ -9,8 +9,9 @@ An interactive script to configure an Ubuntu 24.04 server as a comprehensive net
 - **NAT Gateway**: IPv4 NAT with masquerading (IPv6 designed for end-to-end connectivity)
 - **Dual Stack Support**: Choose IPv4 only, IPv6 only, or both
 - **Interactive Configuration**: User-friendly prompts with input validation
-- **Interactive Menu**: Main menu with configuration and restore options
+- **Interactive Menu**: Main menu with configuration, backup, and restore options
 - **Automatic Backup System**: All configuration files backed up before changes
+- **Manual Backup Creation**: Create on-demand backups of current configuration
 - **Easy Restore**: Restore previous configurations through main menu or command line
 - **Progress Tracking**: Visual progress bars for long-running operations
 - **Comprehensive Logging**: Detailed logging for troubleshooting and auditing
@@ -47,8 +48,9 @@ The script will present you with a main menu:
 ```
 Please select an option:
 1) Configure new DHCP/DNS/NAT gateway
-2) Restore from previous backup
-3) Exit
+2) Create manual backup of current configuration
+3) Restore from previous backup
+4) Exit
 ```
 
 ### Command Line Options (Alternative)
@@ -119,12 +121,27 @@ The script **automatically creates backups** before making any changes:
   - dnsmasq configuration (`/etc/dnsmasq.conf`)
   - UFW firewall rules (`/etc/ufw/before.rules`)
 
+### Manual Backup Creation
+
+#### Interactive Menu
+```bash
+sudo ./dhcpAutoPilot.sh
+# Select "2) Create manual backup of current configuration"
+```
+
+**Features:**
+- Creates timestamped backup of current configuration
+- Shows progress during backup process
+- Lists all backed up files
+- No system changes made (read-only operation)
+- Option to return to main menu or exit
+
 ### Restore Options
 
 #### Option 1: Interactive Menu (Recommended)
 ```bash
 sudo ./dhcpAutoPilot.sh
-# Select "2) Restore from previous backup"
+# Select "3) Restore from previous backup"
 ```
 
 #### Option 2: Command Line

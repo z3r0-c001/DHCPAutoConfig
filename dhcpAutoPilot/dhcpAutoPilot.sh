@@ -269,16 +269,18 @@ initial_setup() {
     # Main menu choice
     log_message "Please select an option:"
     log_message "1) Configure new DHCP/DNS/NAT gateway"
-    log_message "2) Restore from previous backup"
-    log_message "3) Exit"
+    log_message "2) Create manual backup of current configuration"
+    log_message "3) Restore from previous backup"
+    log_message "4) Exit"
 
     while true; do
-        read -rp "Enter your choice (1, 2, or 3): " MAIN_CHOICE
+        read -rp "Enter your choice (1, 2, 3, or 4): " MAIN_CHOICE
         case "$MAIN_CHOICE" in
             1) break ;;  # Continue with normal setup
-            2) restore_configuration ;;  # Go to restore function
-            3) log_message "Exiting..."; exit 0 ;;
-            *) log_message "Invalid choice. Please enter 1, 2, or 3." ;;
+            2) create_manual_backup ;;  # Go to manual backup function
+            3) restore_configuration ;;  # Go to restore function
+            4) log_message "Exiting..."; exit 0 ;;
+            *) log_message "Invalid choice. Please enter 1, 2, 3, or 4." ;;
         esac
     done
 
@@ -752,6 +754,81 @@ restore_configuration() {
         log_message "Please remember to reboot your system manually later."
     fi
     exit 0
+}
+
+create_manual_backup() {
+    log_message "--- Manual Backup Creation ---"
+    log_message "This will create a backup of your current network configuration."
+    log_message "Backup location: $BACKUP_DIR"
+    log_message ""
+    
+    read -rp "Do you want to proceed with creating a manual backup? [y/N]: " CONFIRM_BACKUP
+    if [[ ! "$CONFIRM_BACKUP" =~ ^[Yy]$ ]]; then
+        log_message "Manual backup cancelled."
+        read -rp "Return to main menu? [y/N]: " RETURN_MENU
+        if [[ "$RETURN_MENU" =~ ^[Yy]$ ]]; then
+            initial_setup
+        else
+            log_message "Exiting..."
+            exit 0
+        fi
+    fi
+    
+    local TIMESTAMP=$(create_backup_timestamp)
+    local BACKUP_PATH="$BACKUP_DIR/$TIMESTAMP"
+    
+    log_message "Creating manual backup with timestamp: $TIMESTAMP"
+    log_message ""
+    
+    show_progress 1 4 "Creating backup directory..."
+    mkdir -p "$BACKUP_PATH" || error_exit "Failed to create backup directory $BACKUP_PATH."
+    
+    show_progress 2 4 "Backing up Netplan configuration..."
+    if [[ -d "$NETPLAN_DIR" ]] && [[ -n "$(ls -A "$NETPLAN_DIR" 2>/dev/null)" ]]; then
+        mkdir -p "$BACKUP_PATH/netplan" || error_exit "Failed to create netplan backup directory."
+        cp -R "$NETPLAN_DIR"/* "$BACKUP_PATH/netplan/" || error_exit "Failed to backup Netplan files."
+    else
+        log_message "No Netplan configuration found to backup."
+    fi
+    
+    show_progress 3 4 "Backing up dnsmasq and UFW configuration..."
+    # Backup dnsmasq configuration
+    if [[ -f "$DNSMASQ_CONF" ]]; then
+        mkdir -p "$BACKUP_PATH/etc" || error_exit "Failed to create etc backup directory."
+        cp "$DNSMASQ_CONF" "$BACKUP_PATH/etc/dnsmasq.conf.orig" || error_exit "Failed to backup dnsmasq.conf."
+    else
+        log_message "No dnsmasq configuration found to backup."
+    fi
+    
+    # Backup UFW before.rules
+    if [[ -f "$UFW_BEFORE_RULES" ]]; then
+        mkdir -p "$BACKUP_PATH/etc/ufw" || error_exit "Failed to create UFW backup directory."
+        cp "$UFW_BEFORE_RULES" "$BACKUP_PATH/etc/ufw/before.rules.orig" || error_exit "Failed to backup UFW before.rules."
+    else
+        log_message "No UFW before.rules found to backup."
+    fi
+    
+    show_progress 4 4 "Manual backup completed"
+    log_message ""
+    log_message "Manual backup created successfully!"
+    log_message "Backup location: $BACKUP_PATH"
+    log_message "Backup timestamp: $TIMESTAMP"
+    log_message ""
+    
+    # Show backup contents
+    log_message "Backup contents:"
+    if [[ -d "$BACKUP_PATH" ]]; then
+        find "$BACKUP_PATH" -type f | sed "s|$BACKUP_PATH/|- |" | sort
+    fi
+    log_message ""
+    
+    read -rp "Return to main menu? [y/N]: " RETURN_MENU
+    if [[ "$RETURN_MENU" =~ ^[Yy]$ ]]; then
+        initial_setup
+    else
+        log_message "Exiting..."
+        exit 0
+    fi
 }
 
 # --- Main execution flow ---
