@@ -28,7 +28,7 @@ An interactive script to configure an Ubuntu 24.04 server as a comprehensive net
 
 1. Clone or download the script:
    ```bash
-   wget https://raw.githubusercontent.com/your-repo/dhcpAutoPilot/main/dhcpAutoPilot.sh
+   wget https://raw.githubusercontent.com/z3r0-c001/dhcpAutoPilot/main/dhcpAutoPilot.sh
    chmod +x dhcpAutoPilot.sh
    ```
 
